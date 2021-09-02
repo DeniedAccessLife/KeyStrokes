@@ -1,7 +1,7 @@
 # KeyStrokes
 Program for visualizing the keys pressed by the user during the game.
 
-# Viev
+# View
 Window for displaying keys.
 
 ![alt text](https://raw.githubusercontent.com/DeniedAccessLife/KeyStrokes/master/viev.png)
