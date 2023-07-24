@@ -59,5 +59,23 @@ namespace KeyStrokes.Properties {
                 resourceCulture = value;
             }
         }
+        
+        /// <summary>
+        ///   Поиск локализованного ресурса типа System.IO.UnmanagedMemoryStream, аналогичного System.IO.MemoryStream.
+        /// </summary>
+        internal static System.IO.UnmanagedMemoryStream Keyboard {
+            get {
+                return ResourceManager.GetStream("Keyboard", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Поиск локализованного ресурса типа System.IO.UnmanagedMemoryStream, аналогичного System.IO.MemoryStream.
+        /// </summary>
+        internal static System.IO.UnmanagedMemoryStream Mouse {
+            get {
+                return ResourceManager.GetStream("Mouse", resourceCulture);
+            }
+        }
     }
 }

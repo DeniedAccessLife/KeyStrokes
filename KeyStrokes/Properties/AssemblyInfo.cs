@@ -10,7 +10,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("DeniedAccessLife")]
 [assembly: AssemblyProduct("KeyStrokes")]
-[assembly: AssemblyCopyright("Copyright © DeniedAccessLife. 2021")]
+[assembly: AssemblyCopyright("Copyright © DeniedAccessLife. 2023")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

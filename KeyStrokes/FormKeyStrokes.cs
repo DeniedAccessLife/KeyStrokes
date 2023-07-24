@@ -1,15 +1,30 @@
-﻿using System;
+﻿using Indieteur.GlobalHooks;
+using System;
+using System.Collections.Generic;
 using System.Drawing;
+using System.Media;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
-using Indieteur.GlobalHooks;
 
 namespace KeyStrokes
 {
     public partial class FormKeyStrokes : Form
     {
+        private const int HT_CAPTION = 0x2;
+        private const int WM_NCLBUTTONDOWN = 0xA1;
+
         GlobalKeyHook globalKeyHook;
         GlobalMouseHook globalMouseHook;
+
+        List<Control> changeColor;
+        Dictionary<GHMouseButtons, Button> mouseMap;
+        Dictionary<VirtualKeycodes, Button> keyboardMap;
+
+        [DllImport("user32.DLL", EntryPoint = "ReleaseCapture")]
+        private extern static void ReleaseCapture();
+
+        [DllImport("user32.DLL", EntryPoint = "SendMessage")]
+        private extern static void SendMessage(IntPtr hWnd, int wMsg, int wParam, int lParam);
 
         public FormKeyStrokes()
         {
@@ -22,173 +37,166 @@ namespace KeyStrokes
             globalMouseHook = new GlobalMouseHook();
             globalMouseHook.OnButtonDown += GlobalMouseHook_OnButtonDown;
             globalMouseHook.OnButtonUp += GlobalMouseHook_OnButtonUp;
+
+            changeColor = new List<Control> { W, A, S, D, Space, Left, Right, labelColors, labelFunctions, watermark, checkBoxGradient, checkBoxWatermark, checkBoxMouse, checkBoxKeyboard };
+
+            mouseMap = new Dictionary<GHMouseButtons, Button>
+            {
+                { GHMouseButtons.Left, Left },
+                { GHMouseButtons.Right, Right },
+            };
+
+            keyboardMap = new Dictionary<VirtualKeycodes, Button>
+            {
+                { VirtualKeycodes.W, W },
+                { VirtualKeycodes.A, A },
+                { VirtualKeycodes.S, S },
+                { VirtualKeycodes.D, D },
+                { VirtualKeycodes.Space, Space }
+            };
         }
-
-        #region FormDragging
-        [DllImport("user32.DLL", EntryPoint = "ReleaseCapture")]
-        private extern static void ReleaseCapture();
-
-        [DllImport("user32.DLL", EntryPoint = "SendMessage")]
-        private extern static void SendMessage(System.IntPtr hWnd, int wMsg, int wParam, int lParam);
-        #endregion
-
-        #region Gradient
-        float step = 0;
-        Color currentColor = Color.FromArgb(46, 204, 113);
-        Color targetColor = Color.FromArgb(229, 54, 69);
-        Random rnd = new Random();
-        #endregion
 
         private void GlobalKeyHook_OnKeyUp(object sender, GlobalKeyEventArgs e)
         {
-            if (e.KeyCode == VirtualKeycodes.W)
+            if (keyboardMap.TryGetValue(e.KeyCode, out var button))
             {
-                BtnW.BackColor = Color.FromArgb(18, 18, 18);
-            }
-
-            if (e.KeyCode == VirtualKeycodes.A)
-            {
-                BtnA.BackColor = Color.FromArgb(18, 18, 18);
-            }
-
-            if (e.KeyCode == VirtualKeycodes.S)
-            {
-                BtnS.BackColor = Color.FromArgb(18, 18, 18);
-            }
-
-            if (e.KeyCode == VirtualKeycodes.D)
-            {
-                BtnD.BackColor = Color.FromArgb(18, 18, 18);
-            }
-
-            if(e.KeyCode == VirtualKeycodes.Space)
-            {
-                BtnSpace.BackColor = Color.FromArgb(18, 18, 18);
+                button.BackColor = Color.FromArgb(18, 18, 18);
             }
         }
 
         private void GlobalKeyHook_OnKeyDown(object sender, GlobalKeyEventArgs e)
         {
-            if (e.KeyCode == VirtualKeycodes.W)
+            if (checkBoxKeyboard.Checked == true)
             {
-                BtnW.BackColor = Color.FromArgb(123, 123, 123);
+                SoundPlayer keyboard = new SoundPlayer(Properties.Resources.Keyboard);
+                keyboard.Play();
             }
 
-            if (e.KeyCode == VirtualKeycodes.A)
+            if (keyboardMap.TryGetValue(e.KeyCode, out var button))
             {
-                BtnA.BackColor = Color.FromArgb(123, 123, 123);
+                button.BackColor = Color.FromArgb(100, 100, 100);
             }
 
-            if (e.KeyCode == VirtualKeycodes.S)
+            if (e.KeyCode == VirtualKeycodes.Insert)
             {
-                BtnS.BackColor = Color.FromArgb(123, 123, 123);
-            }
+                panel1.Visible = !panel1.Visible;
+                panel2.Visible = !panel2.Visible;
 
-            if (e.KeyCode == VirtualKeycodes.D)
-            {
-                BtnD.BackColor = Color.FromArgb(123, 123, 123);
-            }
-
-            if (e.KeyCode == VirtualKeycodes.Space)
-            {
-                BtnSpace.BackColor = Color.FromArgb(123, 123, 123);
+                watermark.Text = "KeyStrokes";
+                watermark.Font = new Font(watermark.Font.Name, 9.75F, watermark.Font.Style);
             }
         }
 
         private void GlobalMouseHook_OnButtonUp(object sender, GlobalMouseEventArgs e)
         {
-            if (e.Button == GHMouseButtons.Left)
+            if (mouseMap.TryGetValue(e.Button, out var button))
             {
-                BtnL.BackColor = Color.FromArgb(18, 18, 18);
-            }
-
-            if (e.Button == GHMouseButtons.Right)
-            {
-                BtnR.BackColor = Color.FromArgb(18, 18, 18);
+                button.BackColor = Color.FromArgb(18, 18, 18);
             }
         }
 
         private void GlobalMouseHook_OnButtonDown(object sender, GlobalMouseEventArgs e)
         {
-            if (e.Button == GHMouseButtons.Left)
+            if (checkBoxMouse.Checked == true)
             {
-                BtnL.BackColor = Color.FromArgb(123, 123, 123);
+                SoundPlayer mouse = new SoundPlayer(Properties.Resources.Mouse);
+                mouse.Play();
             }
 
-            if (e.Button == GHMouseButtons.Right)
+            if (mouseMap.TryGetValue(e.Button, out var button))
             {
-                BtnR.BackColor = Color.FromArgb(123, 123, 123);
+                button.BackColor = Color.FromArgb(100, 100, 100);
             }
         }
 
-        private void gradient_Tick(object sender, EventArgs e)
+        private void checkBoxGradient_CheckedChanged(object sender, EventArgs e)
         {
-            if (step >= 1f)
-            {
-                step = 0;
-
-                int R = rnd.Next(0, 255);
-                int G = rnd.Next(0, 255);
-                int B = rnd.Next(0, 255);
-                currentColor = targetColor;
-                targetColor = Color.FromArgb(R, G, B);
-            }
-            int mixR = (int)(currentColor.R * (1f - step) + targetColor.R * step);
-            int mixG = (int)(currentColor.G * (1f - step) + targetColor.G * step);
-            int mixB = (int)(currentColor.B * (1f - step) + targetColor.B * step);
-
-            BtnW.ForeColor = Color.FromArgb(mixR, mixG, mixB);
-            BtnA.ForeColor = Color.FromArgb(mixR, mixG, mixB);
-            BtnS.ForeColor = Color.FromArgb(mixR, mixG, mixB);
-            BtnD.ForeColor = Color.FromArgb(mixR, mixG, mixB);
-            BtnSpace.ForeColor = Color.FromArgb(mixR, mixG, mixB);
-            BtnL.ForeColor = Color.FromArgb(mixR, mixG, mixB);
-            BtnR.ForeColor = Color.FromArgb(mixR, mixG, mixB);
-            lblWatermark.ForeColor = Color.FromArgb(mixR, mixG, mixB);
-
-            step += 0.03f;
+            gradient.Enabled = checkBoxGradient.Checked;
         }
 
-        private void BtnW_MouseDown(object sender, MouseEventArgs e)
+        private void checkBoxWatermark_CheckedChanged(object sender, EventArgs e)
         {
-            ReleaseCapture();
-            SendMessage(this.Handle, 0x112, 0xf012, 0);
+            watermark.Visible = checkBoxWatermark.Checked;
         }
 
-        private void BtnA_MouseDown(object sender, MouseEventArgs e)
+        private void Btn1_Click(object sender, EventArgs e)
         {
-            ReleaseCapture();
-            SendMessage(this.Handle, 0x112, 0xf012, 0);
+            ChangeColor(Color.FromArgb(229, 54, 69));
         }
 
-        private void BtnS_MouseDown(object sender, MouseEventArgs e)
+        private void Btn2_Click(object sender, EventArgs e)
         {
-            ReleaseCapture();
-            SendMessage(this.Handle, 0x112, 0xf012, 0);
+            ChangeColor(Color.FromArgb(0, 21, 255));
         }
 
-        private void BtnD_MouseDown(object sender, MouseEventArgs e)
+        private void Btn3_Click(object sender, EventArgs e)
         {
-            ReleaseCapture();
-            SendMessage(this.Handle, 0x112, 0xf012, 0);
+            ChangeColor(Color.FromArgb(190, 0, 255));
         }
 
-        private void BtnSpace_MouseDown(object sender, MouseEventArgs e)
+        private void Btn4_Click(object sender, EventArgs e)
         {
-            ReleaseCapture();
-            SendMessage(this.Handle, 0x112, 0xf012, 0);
+            ChangeColor(Color.FromArgb(11, 169, 24));
         }
 
-        private void BtnL_MouseDown(object sender, MouseEventArgs e)
+        private void Btn5_Click(object sender, EventArgs e)
         {
-            ReleaseCapture();
-            SendMessage(this.Handle, 0x112, 0xf012, 0);
+            ChangeColor(Color.FromArgb(24, 240, 255));
         }
 
-        private void BtnR_MouseDown(object sender, MouseEventArgs e)
+        private void Btn6_Click(object sender, EventArgs e)
         {
-            ReleaseCapture();
-            SendMessage(this.Handle, 0x112, 0xf012, 0);
+            ChangeColor(Color.FromArgb(255, 98, 0));
+        }
+
+        private void Btn7_Click(object sender, EventArgs e)
+        {
+            ChangeColor(Color.FromArgb(255, 0, 188));
+        }
+
+        private void Btn8_Click(object sender, EventArgs e)
+        {
+            ChangeColor(Color.FromArgb(114, 0, 255));
+        }
+
+        private void Btn9_Click(object sender, EventArgs e)
+        {
+            ChangeColor(Color.FromArgb(236, 234, 80));
+        }
+
+        private void Btn10_Click(object sender, EventArgs e)
+        {
+            ChangeColor(Color.FromArgb(100, 121, 145));
+        }
+
+        private void Btn11_Click(object sender, EventArgs e)
+        {
+            ChangeColor(Color.FromArgb(102, 66, 91));
+        }
+
+        private void Btn12_Click(object sender, EventArgs e)
+        {
+            ChangeColor(Color.FromArgb(205, 94, 35));
+        }
+
+        private void Btn13_Click(object sender, EventArgs e)
+        {
+            ChangeColor(Color.FromArgb(46, 204, 113));
+        }
+
+        private void Btn14_Click(object sender, EventArgs e)
+        {
+            ChangeColor(Color.FromArgb(228, 85, 96));
+        }
+
+        private void Btn15_Click(object sender, EventArgs e)
+        {
+            ChangeColor(Color.FromArgb(156, 81, 157));
+        }
+
+        private void Btn16_Click(object sender, EventArgs e)
+        {
+            ChangeColor(Color.FromArgb(72, 98, 249));
         }
     }
 }
